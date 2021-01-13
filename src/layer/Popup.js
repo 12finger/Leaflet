@@ -234,48 +234,80 @@ export var Popup = DivOverlay.extend({
 	},
 
 	_adjustPan: function () {
-		if (!this.options.autoPan) { return; }
-		if (this._map._panAnim) { this._map._panAnim.stop(); }
+    if (!this.options.autoPan) {
+      return;
+    }
+    if (this._map._panAnim) {
+      this._map._panAnim.stop();
+    }
 
-		var map = this._map,
-		    marginBottom = parseInt(DomUtil.getStyle(this._container, 'marginBottom'), 10) || 0,
-		    containerHeight = this._container.offsetHeight + marginBottom,
-		    containerWidth = this._containerWidth,
-		    layerPos = new Point(this._containerLeft, -containerHeight - this._containerBottom);
+    var map = this._map,
+      marginBottom =
+        parseInt(DomUtil.getStyle(this._container, "marginBottom"), 10) || 0,
+      containerHeight = this._container.offsetHeight + marginBottom,
+      containerWidth = this._containerWidth,
+      layerPos = new Point(
+        this._containerLeft,
+        -containerHeight - this._containerBottom
+      );
 
-		layerPos._add(DomUtil.getPosition(this._container));
+    layerPos._add(DomUtil.getPosition(this._container));
 
-		var containerPos = map.layerPointToContainerPoint(layerPos),
-		    padding = toPoint(this.options.autoPanPadding),
-		    paddingTL = toPoint(this.options.autoPanPaddingTopLeft || padding),
-		    paddingBR = toPoint(this.options.autoPanPaddingBottomRight || padding),
-		    size = map.getSize(),
-		    dx = 0,
-		    dy = 0;
+    var containerPos = map.layerPointToContainerPoint(layerPos),
+      padding = toPoint(this.options.autoPanPadding),
+      paddingTL = toPoint(this.options.autoPanPaddingTopLeft || padding),
+      paddingBR = toPoint(this.options.autoPanPaddingBottomRight || padding),
+      size = map.getSize(),
+      dx = 0,
+      dy = 0;
 
-		if (containerPos.x + containerWidth + paddingBR.x > size.x) { // right
-			dx = containerPos.x + containerWidth - size.x + paddingBR.x;
-		}
-		if (containerPos.x - dx - paddingTL.x < 0) { // left
-			dx = containerPos.x - paddingTL.x;
-		}
-		if (containerPos.y + containerHeight + paddingBR.y > size.y) { // bottom
-			dy = containerPos.y + containerHeight - size.y + paddingBR.y;
-		}
-		if (containerPos.y - dy - paddingTL.y < 0) { // top
-			dy = containerPos.y - paddingTL.y;
-		}
+    if (containerPos.x + containerWidth + paddingBR.x > size.x) {
+      // right
+      dx = containerPos.x + containerWidth - size.x + paddingBR.x;
+    }
+    if (containerPos.x - dx - paddingTL.x < 0) {
+      // left
+      dx = containerPos.x - paddingTL.x;
+    }
+    if (containerPos.y + containerHeight + paddingBR.y > size.y) {
+      // bottom
+      dy = containerPos.y + containerHeight - size.y + paddingBR.y;
+    }
+    if (containerPos.y - dy - paddingTL.y < 0) {
+      // top
+      dy = containerPos.y - paddingTL.y;
+    }
 
-		// @namespace Map
-		// @section Popup events
-		// @event autopanstart: Event
-		// Fired when the map starts autopanning when opening a popup.
-		if (dx || dy) {
-			map
-			    .fire('autopanstart')
-			    .panBy([dx, dy]);
-		}
-	},
+    // @namespace Map
+    // @section Popup events
+    // @event autopanstart: Event
+    // Fired when the map starts autopanning when opening a popup.
+
+    // TODO patze OUT!
+    // if (dx || dy) {
+    // 	map
+    // 	    .fire('autopanstart')
+    // 	    .panBy([dx, dy]);
+    // }
+    // !Patze in:
+    if (dx || dy) {
+      if (map._zoom <= 4) {
+        console.log("omap handcoded _adjustPan");
+        const posOfPopupInPX = map.project(this._latlng, 5);
+        const posOfCenterInLatLng = map.unproject(
+          {
+            x: posOfPopupInPX.x,
+            y: posOfPopupInPX.y - containerHeight / 2
+          },
+          5
+        );
+        map.flyTo(posOfCenterInLatLng, 5);
+      } else {
+        map.fire("autopanstart").panBy([dx, dy]);
+      }
+    }
+    // * patze in END
+  },
 
 	_onCloseButtonClick: function (e) {
 		this._close();
